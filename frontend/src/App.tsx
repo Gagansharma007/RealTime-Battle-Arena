@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getSocket } from "./socket";
 import GameCanvas from "./game/GameCanvas";
+import { handleMovement } from "./game/handleMovement";
 
 function App() {
     const [players, setPlayers] = useState<Record<string, { x: number; y: number }>>({});
@@ -18,6 +19,9 @@ function App() {
         socket.on("updatePlayers", handleUpdatePlayers);
         socket.on("connect", handleConnect);
         socket.on("disconnect", handleDisconnect);
+
+        // Attach movement handling
+        handleMovement(socket);
 
         return () => {
             socket.off("updatePlayers", handleUpdatePlayers);
