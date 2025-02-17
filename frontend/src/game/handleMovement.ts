@@ -1,43 +1,30 @@
-export const handleMovement = (socket: any) => {
-    let moving = { x: 0, y: 0 };
+export const handleMovement = (socket: any, getPlayerPosition: () => { x: number; y: number }) => {
+    window.addEventListener("keydown", (event) => {
+        let movement = { x: 0, y: 0 };
+        const playerPos = getPlayerPosition(); // ✅ Get real-time position
+        const speed = 2; // 🔹 Reduce speed for better control
 
-    const handleKeyDown = (event: KeyboardEvent) => {
         switch (event.key) {
             case "ArrowUp":
             case "w":
-                moving.y = -5;
+                if (playerPos.y - speed >= 0) movement.y = -speed; // 🔹 Prevent moving above the screen
                 break;
             case "ArrowDown":
             case "s":
-                moving.y = 5;
+                if (playerPos.y + speed <= 580) movement.y = speed; // 🔹 Prevent moving below the screen
                 break;
             case "ArrowLeft":
             case "a":
-                moving.x = -5;
+                if (playerPos.x - speed >= 0) movement.x = -speed; // 🔹 Prevent moving off the left side
                 break;
             case "ArrowRight":
             case "d":
-                moving.x = 5;
+                if (playerPos.x + speed <= 780) movement.x = speed; // 🔹 Prevent moving off the right side
                 break;
         }
-        socket.emit("move", moving);
-    };
 
-    const handleKeyUp = (event: KeyboardEvent) => {
-        if (["ArrowUp", "w", "ArrowDown", "s"].includes(event.key)) {
-            moving.y = 0;
+        if (movement.x !== 0 || movement.y !== 0) {
+            socket.emit("move", movement);
         }
-        if (["ArrowLeft", "a", "ArrowRight", "d"].includes(event.key)) {
-            moving.x = 0;
-        }
-        socket.emit("move", moving);
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    window.addEventListener("keyup", handleKeyUp);
-
-    return () => {
-        window.removeEventListener("keydown", handleKeyDown);
-        window.removeEventListener("keyup", handleKeyUp);
-    };
+    });
 };

@@ -19,15 +19,15 @@ const io = new Server(server, {
 });
 
 const players: { [id: string]: { x: number; y: number } } = {};
+const bullets: { id: string; x: number; y: number; direction: string; range: number }[] = [];
 
 io.on("connection", (socket: Socket) => {
     console.log(`Player connected: ${socket.id}`);
-
     players[socket.id] = { x: Math.random() * 500, y: Math.random() * 500 };
 
     io.emit("updatePlayers", players);
-
-    socket.on("move", (movement: { x: number; y: number }) => {
+    
+    socket.on("move", (movement) => {
         if (players[socket.id]) {
             players[socket.id].x += movement.x;
             players[socket.id].y += movement.y;
@@ -35,8 +35,35 @@ io.on("connection", (socket: Socket) => {
         }
     });
 
+    socket.on("shoot", (data) => {
+        const bulletId = `${socket.id}-${Date.now()}`;
+        const newBullet = {
+            id: bulletId,
+            x: data.x,
+            y: data.y,
+            direction: data.direction,
+            range: 500
+        };
+        bullets.push(newBullet);
+        io.emit("newBullet", newBullet);
+    });
+
+    setInterval(() => {
+        bullets.forEach((bullet, index) => {
+            switch (bullet.direction) {
+                case "up": bullet.y -= 7; break;
+                case "down": bullet.y += 7; break;
+                case "left": bullet.x -= 7; break;
+                case "right": bullet.x += 7; break;
+            }
+            bullet.range -= 7;
+            if (bullet.range <= 0) bullets.splice(index, 1);
+        });
+
+        io.emit("updateBullets", bullets);
+    }, 50);
+
     socket.on("disconnect", () => {
-        console.log(`Player disconnected: ${socket.id}`);
         delete players[socket.id];
         io.emit("updatePlayers", players);
     });
