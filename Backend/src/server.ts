@@ -3,6 +3,7 @@ import http from "http";
 import { Server, Socket } from "socket.io";
 import cors from "cors";
 import dotenv from "dotenv";
+import { checkCollision } from "./collision";
 
 dotenv.config();
 
@@ -19,7 +20,7 @@ const io = new Server(server, {
 });
 
 const players: { [id: string]: { x: number; y: number } } = {};
-const bullets: { id: string; x: number; y: number; direction: string; range: number }[] = [];
+const bullets: { id: string; playerId: string; x: number; y: number; direction: string; range: number }[] = [];
 
 io.on("connection", (socket: Socket) => {
     console.log(`Player connected: ${socket.id}`);
@@ -39,6 +40,7 @@ io.on("connection", (socket: Socket) => {
         const bulletId = `${socket.id}-${Date.now()}`;
         const newBullet = {
             id: bulletId,
+            playerId : socket.id,
             x: data.x,
             y: data.y,
             direction: data.direction,
@@ -57,6 +59,13 @@ io.on("connection", (socket: Socket) => {
                 case "right": bullet.x += 7; break;
             }
             bullet.range -= 7;
+            Object.keys(players).forEach((playerId)=>{
+                if( bullet.playerId !== playerId && checkCollision( bullet , players[playerId])){
+                    console.log(`Player ${playerId} was hit by ${bullet.playerId}`);
+                    bullets.splice(index, 1);
+                    io.emit("playerHit" , { playerId , shooterId : bullet.playerId });
+                }
+            })
             if (bullet.range <= 0) bullets.splice(index, 1);
         });
 

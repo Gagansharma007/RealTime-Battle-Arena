@@ -45,13 +45,18 @@ function App() {
             setIsConnected(false);
             setPlayerId("");
         };
-
+        const handlePlayerHit = ( data : { playerId : string ; shooterId : string }) => {
+            const { playerId , shooterId } = data;
+            console.log(playerId);
+            console.log(`Player ${playerId} was hit by ${shooterId}!`);
+        };
+        
         socket.on("updatePlayers", handleUpdatePlayers);
         socket.on("newBullet", handleNewBullet);
         socket.on("updateBullets", handleUpdateBullets);
         socket.on("connect", handleConnect);
         socket.on("disconnect", handleDisconnect);
-
+        socket.on("playerHit", handlePlayerHit );
         handleMovement(socket, getPlayerPosition);
 
         return () => {
@@ -60,6 +65,7 @@ function App() {
             socket.off("updateBullets", handleUpdateBullets);
             socket.off("connect", handleConnect);
             socket.off("disconnect", handleDisconnect);
+            socket.off("playerHit" , handlePlayerHit );
         };
     }, []); // ✅ Removed players dependency to prevent unnecessary re-renders
 
