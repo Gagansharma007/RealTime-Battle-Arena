@@ -19,12 +19,12 @@ const io = new Server(server, {
     }
 });
 
-const players: { [id: string]: { x: number; y: number } } = {};
+const players: { [id: string]: { x: number; y: number; health : number ; score : number } } = {};
 const bullets: { id: string; playerId: string; x: number; y: number; direction: string; range: number }[] = [];
 
 io.on("connection", (socket: Socket) => {
     console.log(`Player connected: ${socket.id}`);
-    players[socket.id] = { x: Math.random() * 500, y: Math.random() * 500 };
+    players[socket.id] = { x: Math.random() * 500, y: Math.random() * 500, health : 100, score : 0 };
 
     io.emit("updatePlayers", players);
     
@@ -62,8 +62,16 @@ io.on("connection", (socket: Socket) => {
             Object.keys(players).forEach((playerId)=>{
                 if( bullet.playerId !== playerId && checkCollision( bullet , players[playerId])){
                     console.log(`Player ${playerId} was hit by ${bullet.playerId}`);
+                    players[playerId].health -= 20;
+                    players[bullet.playerId].score += 10;
+                    if (players[playerId].health <= 0) {
+                        console.log(`Player ${playerId} eliminated`);
+                        delete players[playerId];
+                        io.emit("playerEliminated", { playerId });
+                    }
                     bullets.splice(index, 1);
-                    io.emit("playerHit" , { playerId , shooterId : bullet.playerId });
+                    io.emit("playerHit" , { playerId , shooterId : bullet.playerId, newHealth: players[playerId]?.health || 0 });
+                    io.emit("updateScores", players);
                 }
             })
             if (bullet.range <= 0) bullets.splice(index, 1);

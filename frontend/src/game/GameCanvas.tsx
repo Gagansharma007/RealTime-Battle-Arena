@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Projectile } from "./Projectile";
 
-const GameCanvas = ({ players, bullets }: { players: Record<string, { x: number; y: number }>, bullets: Projectile[] }) => {
+const GameCanvas = ({ players, bullets }: { players: Record<string, { x: number; y: number; health: number; score : number; }>, bullets: Projectile[] }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
@@ -17,7 +17,16 @@ const GameCanvas = ({ players, bullets }: { players: Record<string, { x: number;
             Object.values(players).forEach((player) => {
                 ctx.fillStyle = "blue";
                 ctx.fillRect(player.x, player.y, 20, 20);
+                // ✅ Draw health bar
+                ctx.fillStyle = "red";
+                ctx.fillRect(player.x, player.y - 10, (player.health / 100) * 20, 5); 
+
+                ctx.fillStyle = "green";
+                ctx.font = "10px Arial";
+                ctx.fillText(`Score: ${player.score}`, player.x - 10, player.y - 15);
             });
+
+            
 
             // Draw bullets
             bullets.forEach((bullet) => {
